@@ -1109,6 +1109,1594 @@
               "fqn": "aws-cdk-lib.aws_route53.CfnHealthCheck",
               "version": "2.178.1"
             }
+          },
+          "MskCluster": {
+            "id": "MskCluster",
+            "path": "localstack/MskCluster",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::MSK::Cluster",
+              "aws:cdk:cloudformation:props": {
+                "brokerNodeGroupInfo": {
+                  "clientSubnets": [
+                    {
+                      "Ref": "PatientManagementVPCPrivateSubnet1Subnet05B10E79"
+                    },
+                    {
+                      "Ref": "PatientManagementVPCPrivateSubnet2Subnet8A2E409C"
+                    }
+                  ],
+                  "instanceType": "kafka.m5.xlarge",
+                  "brokerAzDistribution": "Default"
+                },
+                "clusterName": "kafka-cluster",
+                "kafkaVersion": "2.8.0",
+                "numberOfBrokerNodes": 1
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_msk.CfnCluster",
+              "version": "2.178.1"
+            }
+          },
+          "PatientManagementCluster": {
+            "id": "PatientManagementCluster",
+            "path": "localstack/PatientManagementCluster",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/PatientManagementCluster/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::Cluster",
+                  "aws:cdk:cloudformation:props": {}
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnCluster",
+                  "version": "2.178.1"
+                }
+              },
+              "DefaultServiceDiscoveryNamespace": {
+                "id": "DefaultServiceDiscoveryNamespace",
+                "path": "localstack/PatientManagementCluster/DefaultServiceDiscoveryNamespace",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/PatientManagementCluster/DefaultServiceDiscoveryNamespace/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::ServiceDiscovery::PrivateDnsNamespace",
+                      "aws:cdk:cloudformation:props": {
+                        "name": "patient-management.local",
+                        "vpc": {
+                          "Ref": "PatientManagementVPC522067E7"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_servicediscovery.CfnPrivateDnsNamespace",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_servicediscovery.PrivateDnsNamespace",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.Cluster",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AuthServicetask": {
+            "id": "AuthServicetask",
+            "path": "localstack/AuthServicetask",
+            "children": {
+              "TaskRole": {
+                "id": "TaskRole",
+                "path": "localstack/AuthServicetask/TaskRole",
+                "children": {
+                  "ImportTaskRole": {
+                    "id": "ImportTaskRole",
+                    "path": "localstack/AuthServicetask/TaskRole/ImportTaskRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AuthServicetask/TaskRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/AuthServicetask/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::TaskDefinition",
+                  "aws:cdk:cloudformation:props": {
+                    "containerDefinitions": [
+                      {
+                        "essential": true,
+                        "image": "auth-service",
+                        "name": "auth-serviceContainer",
+                        "portMappings": [
+                          {
+                            "containerPort": 4005,
+                            "hostPort": 4005,
+                            "protocol": "tcp"
+                          }
+                        ],
+                        "logConfiguration": {
+                          "logDriver": "awslogs",
+                          "options": {
+                            "awslogs-group": {
+                              "Ref": "AuthServiceLogGroup34125B38"
+                            },
+                            "awslogs-stream-prefix": "auth-service",
+                            "awslogs-region": {
+                              "Ref": "AWS::Region"
+                            }
+                          }
+                        },
+                        "environment": [
+                          {
+                            "name": "SPRING_SQL_INIT_MODE",
+                            "value": "always"
+                          },
+                          {
+                            "name": "JWT_SECRET",
+                            "value": "WD8M7rDgw8X6MK713IJnaKjfsK820AsXxl9vZstN84R"
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_URL",
+                            "value": {
+                              "Fn::Join": [
+                                "",
+                                [
+                                  "jdbc://postgresql://",
+                                  {
+                                    "Fn::GetAtt": [
+                                      "AuthServiceDBC6B688BA",
+                                      "Endpoint.Address"
+                                    ]
+                                  },
+                                  ":",
+                                  {
+                                    "Fn::GetAtt": [
+                                      "AuthServiceDBC6B688BA",
+                                      "Endpoint.Port"
+                                    ]
+                                  },
+                                  "/auth-service-db"
+                                ]
+                              ]
+                            }
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_PASSWORD",
+                            "value": {
+                              "Fn::Join": [
+                                "",
+                                [
+                                  "{{resolve:secretsmanager:",
+                                  {
+                                    "Ref": "AuthServiceDBSecretAttachmentF30406A9"
+                                  },
+                                  ":SecretString:password::}}"
+                                ]
+                              ]
+                            }
+                          },
+                          {
+                            "name": "SPRING_JPA_HIBERNATE_DDL_AUTO",
+                            "value": "update"
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT",
+                            "value": "60000"
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_USERNAME",
+                            "value": "admin_user"
+                          },
+                          {
+                            "name": "SPRING_KAFKA_BOOTSTRAP_SERVERS",
+                            "value": "localhost.localstack.cloud:4510, localhost.localstack.cloud:4511, localhost.localstack.cloud:4512"
+                          }
+                        ]
+                      }
+                    ],
+                    "cpu": "256",
+                    "executionRoleArn": {
+                      "Fn::GetAtt": [
+                        "AuthServicetaskExecutionRole20E0C2C2",
+                        "Arn"
+                      ]
+                    },
+                    "family": "localstackAuthServicetask6FF2E52A",
+                    "memory": "512",
+                    "networkMode": "awsvpc",
+                    "requiresCompatibilities": [
+                      "FARGATE"
+                    ],
+                    "taskRoleArn": {
+                      "Fn::GetAtt": [
+                        "AuthServicetaskTaskRoleF454FE6D",
+                        "Arn"
+                      ]
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnTaskDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "auth-serviceContainer": {
+                "id": "auth-serviceContainer",
+                "path": "localstack/AuthServicetask/auth-serviceContainer",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.ContainerDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "ExecutionRole": {
+                "id": "ExecutionRole",
+                "path": "localstack/AuthServicetask/ExecutionRole",
+                "children": {
+                  "ImportExecutionRole": {
+                    "id": "ImportExecutionRole",
+                    "path": "localstack/AuthServicetask/ExecutionRole/ImportExecutionRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AuthServicetask/ExecutionRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultPolicy": {
+                    "id": "DefaultPolicy",
+                    "path": "localstack/AuthServicetask/ExecutionRole/DefaultPolicy",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "localstack/AuthServicetask/ExecutionRole/DefaultPolicy/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                          "aws:cdk:cloudformation:props": {
+                            "policyDocument": {
+                              "Statement": [
+                                {
+                                  "Action": [
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": {
+                                    "Fn::GetAtt": [
+                                      "AuthServiceLogGroup34125B38",
+                                      "Arn"
+                                    ]
+                                  }
+                                }
+                              ],
+                              "Version": "2012-10-17"
+                            },
+                            "policyName": "AuthServicetaskExecutionRoleDefaultPolicy83BD75DA",
+                            "roles": [
+                              {
+                                "Ref": "AuthServicetaskExecutionRole20E0C2C2"
+                              }
+                            ]
+                          }
+                        },
+                        "constructInfo": {
+                          "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                          "version": "2.178.1"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.Policy",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateTaskDefinition",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AuthServiceLogGroup": {
+            "id": "AuthServiceLogGroup",
+            "path": "localstack/AuthServiceLogGroup",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/AuthServiceLogGroup/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::Logs::LogGroup",
+                  "aws:cdk:cloudformation:props": {
+                    "logGroupName": "/ecs/auth-service",
+                    "retentionInDays": 1
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_logs.CfnLogGroup",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_logs.LogGroup",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AuthService": {
+            "id": "AuthService",
+            "path": "localstack/AuthService",
+            "children": {
+              "Service": {
+                "id": "Service",
+                "path": "localstack/AuthService/Service",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::Service",
+                  "aws:cdk:cloudformation:props": {
+                    "cluster": {
+                      "Ref": "PatientManagementCluster98E10F8D"
+                    },
+                    "deploymentConfiguration": {
+                      "maximumPercent": 200,
+                      "minimumHealthyPercent": 50,
+                      "alarms": {
+                        "alarmNames": [],
+                        "enable": false,
+                        "rollback": false
+                      }
+                    },
+                    "enableEcsManagedTags": false,
+                    "launchType": "FARGATE",
+                    "networkConfiguration": {
+                      "awsvpcConfiguration": {
+                        "assignPublicIp": "DISABLED",
+                        "subnets": [
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet1Subnet05B10E79"
+                          },
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet2Subnet8A2E409C"
+                          }
+                        ],
+                        "securityGroups": [
+                          {
+                            "Fn::GetAtt": [
+                              "AuthServiceSecurityGroup67F2FA7D",
+                              "GroupId"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "serviceName": "auth-service",
+                    "taskDefinition": {
+                      "Ref": "AuthServicetask16B9A5B7"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnService",
+                  "version": "2.178.1"
+                }
+              },
+              "SecurityGroup": {
+                "id": "SecurityGroup",
+                "path": "localstack/AuthService/SecurityGroup",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AuthService/SecurityGroup/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "groupDescription": "localstack/AuthService/SecurityGroup",
+                        "securityGroupEgress": [
+                          {
+                            "cidrIp": "0.0.0.0/0",
+                            "description": "Allow all outbound traffic by default",
+                            "ipProtocol": "-1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "PatientManagementVPC522067E7"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSecurityGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.SecurityGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateService",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "BillingServicetask": {
+            "id": "BillingServicetask",
+            "path": "localstack/BillingServicetask",
+            "children": {
+              "TaskRole": {
+                "id": "TaskRole",
+                "path": "localstack/BillingServicetask/TaskRole",
+                "children": {
+                  "ImportTaskRole": {
+                    "id": "ImportTaskRole",
+                    "path": "localstack/BillingServicetask/TaskRole/ImportTaskRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/BillingServicetask/TaskRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/BillingServicetask/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::TaskDefinition",
+                  "aws:cdk:cloudformation:props": {
+                    "containerDefinitions": [
+                      {
+                        "essential": true,
+                        "image": "billing-service",
+                        "name": "billing-serviceContainer",
+                        "portMappings": [
+                          {
+                            "containerPort": 4001,
+                            "hostPort": 4001,
+                            "protocol": "tcp"
+                          },
+                          {
+                            "containerPort": 9001,
+                            "hostPort": 9001,
+                            "protocol": "tcp"
+                          }
+                        ],
+                        "logConfiguration": {
+                          "logDriver": "awslogs",
+                          "options": {
+                            "awslogs-group": {
+                              "Ref": "BillingServiceLogGroupDD61E740"
+                            },
+                            "awslogs-stream-prefix": "billing-service",
+                            "awslogs-region": {
+                              "Ref": "AWS::Region"
+                            }
+                          }
+                        },
+                        "environment": [
+                          {
+                            "name": "SPRING_KAFKA_BOOTSTRAP_SERVERS",
+                            "value": "localhost.localstack.cloud:4510, localhost.localstack.cloud:4511, localhost.localstack.cloud:4512"
+                          }
+                        ]
+                      }
+                    ],
+                    "cpu": "256",
+                    "executionRoleArn": {
+                      "Fn::GetAtt": [
+                        "BillingServicetaskExecutionRoleE8B84325",
+                        "Arn"
+                      ]
+                    },
+                    "family": "localstackBillingServicetask7A1D7CB9",
+                    "memory": "512",
+                    "networkMode": "awsvpc",
+                    "requiresCompatibilities": [
+                      "FARGATE"
+                    ],
+                    "taskRoleArn": {
+                      "Fn::GetAtt": [
+                        "BillingServicetaskTaskRole20EE1D00",
+                        "Arn"
+                      ]
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnTaskDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "billing-serviceContainer": {
+                "id": "billing-serviceContainer",
+                "path": "localstack/BillingServicetask/billing-serviceContainer",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.ContainerDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "ExecutionRole": {
+                "id": "ExecutionRole",
+                "path": "localstack/BillingServicetask/ExecutionRole",
+                "children": {
+                  "ImportExecutionRole": {
+                    "id": "ImportExecutionRole",
+                    "path": "localstack/BillingServicetask/ExecutionRole/ImportExecutionRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/BillingServicetask/ExecutionRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultPolicy": {
+                    "id": "DefaultPolicy",
+                    "path": "localstack/BillingServicetask/ExecutionRole/DefaultPolicy",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "localstack/BillingServicetask/ExecutionRole/DefaultPolicy/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                          "aws:cdk:cloudformation:props": {
+                            "policyDocument": {
+                              "Statement": [
+                                {
+                                  "Action": [
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": {
+                                    "Fn::GetAtt": [
+                                      "BillingServiceLogGroupDD61E740",
+                                      "Arn"
+                                    ]
+                                  }
+                                }
+                              ],
+                              "Version": "2012-10-17"
+                            },
+                            "policyName": "BillingServicetaskExecutionRoleDefaultPolicyBBCCD9B0",
+                            "roles": [
+                              {
+                                "Ref": "BillingServicetaskExecutionRoleE8B84325"
+                              }
+                            ]
+                          }
+                        },
+                        "constructInfo": {
+                          "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                          "version": "2.178.1"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.Policy",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateTaskDefinition",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "BillingServiceLogGroup": {
+            "id": "BillingServiceLogGroup",
+            "path": "localstack/BillingServiceLogGroup",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/BillingServiceLogGroup/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::Logs::LogGroup",
+                  "aws:cdk:cloudformation:props": {
+                    "logGroupName": "/ecs/billing-service",
+                    "retentionInDays": 1
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_logs.CfnLogGroup",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_logs.LogGroup",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "BillingService": {
+            "id": "BillingService",
+            "path": "localstack/BillingService",
+            "children": {
+              "Service": {
+                "id": "Service",
+                "path": "localstack/BillingService/Service",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::Service",
+                  "aws:cdk:cloudformation:props": {
+                    "cluster": {
+                      "Ref": "PatientManagementCluster98E10F8D"
+                    },
+                    "deploymentConfiguration": {
+                      "maximumPercent": 200,
+                      "minimumHealthyPercent": 50,
+                      "alarms": {
+                        "alarmNames": [],
+                        "enable": false,
+                        "rollback": false
+                      }
+                    },
+                    "enableEcsManagedTags": false,
+                    "launchType": "FARGATE",
+                    "networkConfiguration": {
+                      "awsvpcConfiguration": {
+                        "assignPublicIp": "DISABLED",
+                        "subnets": [
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet1Subnet05B10E79"
+                          },
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet2Subnet8A2E409C"
+                          }
+                        ],
+                        "securityGroups": [
+                          {
+                            "Fn::GetAtt": [
+                              "BillingServiceSecurityGroup3783AD35",
+                              "GroupId"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "serviceName": "billing-service",
+                    "taskDefinition": {
+                      "Ref": "BillingServicetask8FA06A09"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnService",
+                  "version": "2.178.1"
+                }
+              },
+              "SecurityGroup": {
+                "id": "SecurityGroup",
+                "path": "localstack/BillingService/SecurityGroup",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/BillingService/SecurityGroup/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "groupDescription": "localstack/BillingService/SecurityGroup",
+                        "securityGroupEgress": [
+                          {
+                            "cidrIp": "0.0.0.0/0",
+                            "description": "Allow all outbound traffic by default",
+                            "ipProtocol": "-1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "PatientManagementVPC522067E7"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSecurityGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.SecurityGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateService",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AnalyticsServicetask": {
+            "id": "AnalyticsServicetask",
+            "path": "localstack/AnalyticsServicetask",
+            "children": {
+              "TaskRole": {
+                "id": "TaskRole",
+                "path": "localstack/AnalyticsServicetask/TaskRole",
+                "children": {
+                  "ImportTaskRole": {
+                    "id": "ImportTaskRole",
+                    "path": "localstack/AnalyticsServicetask/TaskRole/ImportTaskRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AnalyticsServicetask/TaskRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/AnalyticsServicetask/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::TaskDefinition",
+                  "aws:cdk:cloudformation:props": {
+                    "containerDefinitions": [
+                      {
+                        "essential": true,
+                        "image": "analytics-service",
+                        "name": "analytics-serviceContainer",
+                        "portMappings": [
+                          {
+                            "containerPort": 4002,
+                            "hostPort": 4002,
+                            "protocol": "tcp"
+                          }
+                        ],
+                        "logConfiguration": {
+                          "logDriver": "awslogs",
+                          "options": {
+                            "awslogs-group": {
+                              "Ref": "AnalyticsServiceLogGroupBD82F12A"
+                            },
+                            "awslogs-stream-prefix": "analytics-service",
+                            "awslogs-region": {
+                              "Ref": "AWS::Region"
+                            }
+                          }
+                        },
+                        "environment": [
+                          {
+                            "name": "SPRING_KAFKA_BOOTSTRAP_SERVERS",
+                            "value": "localhost.localstack.cloud:4510, localhost.localstack.cloud:4511, localhost.localstack.cloud:4512"
+                          }
+                        ]
+                      }
+                    ],
+                    "cpu": "256",
+                    "executionRoleArn": {
+                      "Fn::GetAtt": [
+                        "AnalyticsServicetaskExecutionRole6014155A",
+                        "Arn"
+                      ]
+                    },
+                    "family": "localstackAnalyticsServicetask7D297514",
+                    "memory": "512",
+                    "networkMode": "awsvpc",
+                    "requiresCompatibilities": [
+                      "FARGATE"
+                    ],
+                    "taskRoleArn": {
+                      "Fn::GetAtt": [
+                        "AnalyticsServicetaskTaskRoleEC257E32",
+                        "Arn"
+                      ]
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnTaskDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "analytics-serviceContainer": {
+                "id": "analytics-serviceContainer",
+                "path": "localstack/AnalyticsServicetask/analytics-serviceContainer",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.ContainerDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "ExecutionRole": {
+                "id": "ExecutionRole",
+                "path": "localstack/AnalyticsServicetask/ExecutionRole",
+                "children": {
+                  "ImportExecutionRole": {
+                    "id": "ImportExecutionRole",
+                    "path": "localstack/AnalyticsServicetask/ExecutionRole/ImportExecutionRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AnalyticsServicetask/ExecutionRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultPolicy": {
+                    "id": "DefaultPolicy",
+                    "path": "localstack/AnalyticsServicetask/ExecutionRole/DefaultPolicy",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "localstack/AnalyticsServicetask/ExecutionRole/DefaultPolicy/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                          "aws:cdk:cloudformation:props": {
+                            "policyDocument": {
+                              "Statement": [
+                                {
+                                  "Action": [
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": {
+                                    "Fn::GetAtt": [
+                                      "AnalyticsServiceLogGroupBD82F12A",
+                                      "Arn"
+                                    ]
+                                  }
+                                }
+                              ],
+                              "Version": "2012-10-17"
+                            },
+                            "policyName": "AnalyticsServicetaskExecutionRoleDefaultPolicy05BC14FF",
+                            "roles": [
+                              {
+                                "Ref": "AnalyticsServicetaskExecutionRole6014155A"
+                              }
+                            ]
+                          }
+                        },
+                        "constructInfo": {
+                          "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                          "version": "2.178.1"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.Policy",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateTaskDefinition",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AnalyticsServiceLogGroup": {
+            "id": "AnalyticsServiceLogGroup",
+            "path": "localstack/AnalyticsServiceLogGroup",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/AnalyticsServiceLogGroup/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::Logs::LogGroup",
+                  "aws:cdk:cloudformation:props": {
+                    "logGroupName": "/ecs/analytics-service",
+                    "retentionInDays": 1
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_logs.CfnLogGroup",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_logs.LogGroup",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "AnalyticsService": {
+            "id": "AnalyticsService",
+            "path": "localstack/AnalyticsService",
+            "children": {
+              "Service": {
+                "id": "Service",
+                "path": "localstack/AnalyticsService/Service",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::Service",
+                  "aws:cdk:cloudformation:props": {
+                    "cluster": {
+                      "Ref": "PatientManagementCluster98E10F8D"
+                    },
+                    "deploymentConfiguration": {
+                      "maximumPercent": 200,
+                      "minimumHealthyPercent": 50,
+                      "alarms": {
+                        "alarmNames": [],
+                        "enable": false,
+                        "rollback": false
+                      }
+                    },
+                    "enableEcsManagedTags": false,
+                    "launchType": "FARGATE",
+                    "networkConfiguration": {
+                      "awsvpcConfiguration": {
+                        "assignPublicIp": "DISABLED",
+                        "subnets": [
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet1Subnet05B10E79"
+                          },
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet2Subnet8A2E409C"
+                          }
+                        ],
+                        "securityGroups": [
+                          {
+                            "Fn::GetAtt": [
+                              "AnalyticsServiceSecurityGroupBA6AE98A",
+                              "GroupId"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "serviceName": "analytics-service",
+                    "taskDefinition": {
+                      "Ref": "AnalyticsServicetask6D768F14"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnService",
+                  "version": "2.178.1"
+                }
+              },
+              "SecurityGroup": {
+                "id": "SecurityGroup",
+                "path": "localstack/AnalyticsService/SecurityGroup",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/AnalyticsService/SecurityGroup/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "groupDescription": "localstack/AnalyticsService/SecurityGroup",
+                        "securityGroupEgress": [
+                          {
+                            "cidrIp": "0.0.0.0/0",
+                            "description": "Allow all outbound traffic by default",
+                            "ipProtocol": "-1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "PatientManagementVPC522067E7"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSecurityGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.SecurityGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateService",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "PatientServicetask": {
+            "id": "PatientServicetask",
+            "path": "localstack/PatientServicetask",
+            "children": {
+              "TaskRole": {
+                "id": "TaskRole",
+                "path": "localstack/PatientServicetask/TaskRole",
+                "children": {
+                  "ImportTaskRole": {
+                    "id": "ImportTaskRole",
+                    "path": "localstack/PatientServicetask/TaskRole/ImportTaskRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/PatientServicetask/TaskRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/PatientServicetask/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::TaskDefinition",
+                  "aws:cdk:cloudformation:props": {
+                    "containerDefinitions": [
+                      {
+                        "essential": true,
+                        "image": "patient-service",
+                        "name": "patient-serviceContainer",
+                        "portMappings": [
+                          {
+                            "containerPort": 4000,
+                            "hostPort": 4000,
+                            "protocol": "tcp"
+                          }
+                        ],
+                        "logConfiguration": {
+                          "logDriver": "awslogs",
+                          "options": {
+                            "awslogs-group": {
+                              "Ref": "PatientServiceLogGroup4A5C3809"
+                            },
+                            "awslogs-stream-prefix": "patient-service",
+                            "awslogs-region": {
+                              "Ref": "AWS::Region"
+                            }
+                          }
+                        },
+                        "environment": [
+                          {
+                            "name": "BILLING_SERVICE_GRPC_PORT",
+                            "value": "9001"
+                          },
+                          {
+                            "name": "SPRING_SQL_INIT_MODE",
+                            "value": "always"
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_URL",
+                            "value": {
+                              "Fn::Join": [
+                                "",
+                                [
+                                  "jdbc://postgresql://",
+                                  {
+                                    "Fn::GetAtt": [
+                                      "PatientServiceDBB84F9BF9",
+                                      "Endpoint.Address"
+                                    ]
+                                  },
+                                  ":",
+                                  {
+                                    "Fn::GetAtt": [
+                                      "PatientServiceDBB84F9BF9",
+                                      "Endpoint.Port"
+                                    ]
+                                  },
+                                  "/patient-service-db"
+                                ]
+                              ]
+                            }
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_PASSWORD",
+                            "value": {
+                              "Fn::Join": [
+                                "",
+                                [
+                                  "{{resolve:secretsmanager:",
+                                  {
+                                    "Ref": "PatientServiceDBSecretAttachment90D77B03"
+                                  },
+                                  ":SecretString:password::}}"
+                                ]
+                              ]
+                            }
+                          },
+                          {
+                            "name": "SPRING_JPA_HIBERNATE_DDL_AUTO",
+                            "value": "update"
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT",
+                            "value": "60000"
+                          },
+                          {
+                            "name": "SPRING_DATASOURCE_USERNAME",
+                            "value": "admin_user"
+                          },
+                          {
+                            "name": "SPRING_KAFKA_BOOTSTRAP_SERVERS",
+                            "value": "localhost.localstack.cloud:4510, localhost.localstack.cloud:4511, localhost.localstack.cloud:4512"
+                          },
+                          {
+                            "name": "BILLING_SERVICE_ADDRESS",
+                            "value": "host.docker.internal"
+                          }
+                        ]
+                      }
+                    ],
+                    "cpu": "256",
+                    "executionRoleArn": {
+                      "Fn::GetAtt": [
+                        "PatientServicetaskExecutionRoleB80AF060",
+                        "Arn"
+                      ]
+                    },
+                    "family": "localstackPatientServicetask177A1E8A",
+                    "memory": "512",
+                    "networkMode": "awsvpc",
+                    "requiresCompatibilities": [
+                      "FARGATE"
+                    ],
+                    "taskRoleArn": {
+                      "Fn::GetAtt": [
+                        "PatientServicetaskTaskRole034A56CF",
+                        "Arn"
+                      ]
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnTaskDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "patient-serviceContainer": {
+                "id": "patient-serviceContainer",
+                "path": "localstack/PatientServicetask/patient-serviceContainer",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.ContainerDefinition",
+                  "version": "2.178.1"
+                }
+              },
+              "ExecutionRole": {
+                "id": "ExecutionRole",
+                "path": "localstack/PatientServicetask/ExecutionRole",
+                "children": {
+                  "ImportExecutionRole": {
+                    "id": "ImportExecutionRole",
+                    "path": "localstack/PatientServicetask/ExecutionRole/ImportExecutionRole",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.Resource",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  },
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/PatientServicetask/ExecutionRole/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                      "aws:cdk:cloudformation:props": {
+                        "assumeRolePolicyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "sts:AssumeRole",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                      "version": "2.178.1"
+                    }
+                  },
+                  "DefaultPolicy": {
+                    "id": "DefaultPolicy",
+                    "path": "localstack/PatientServicetask/ExecutionRole/DefaultPolicy",
+                    "children": {
+                      "Resource": {
+                        "id": "Resource",
+                        "path": "localstack/PatientServicetask/ExecutionRole/DefaultPolicy/Resource",
+                        "attributes": {
+                          "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                          "aws:cdk:cloudformation:props": {
+                            "policyDocument": {
+                              "Statement": [
+                                {
+                                  "Action": [
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": {
+                                    "Fn::GetAtt": [
+                                      "PatientServiceLogGroup4A5C3809",
+                                      "Arn"
+                                    ]
+                                  }
+                                }
+                              ],
+                              "Version": "2012-10-17"
+                            },
+                            "policyName": "PatientServicetaskExecutionRoleDefaultPolicy5F0007CC",
+                            "roles": [
+                              {
+                                "Ref": "PatientServicetaskExecutionRoleB80AF060"
+                              }
+                            ]
+                          }
+                        },
+                        "constructInfo": {
+                          "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                          "version": "2.178.1"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.Policy",
+                      "version": "2.178.1",
+                      "metadata": []
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Role",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateTaskDefinition",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "PatientServiceLogGroup": {
+            "id": "PatientServiceLogGroup",
+            "path": "localstack/PatientServiceLogGroup",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "localstack/PatientServiceLogGroup/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::Logs::LogGroup",
+                  "aws:cdk:cloudformation:props": {
+                    "logGroupName": "/ecs/patient-service",
+                    "retentionInDays": 1
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_logs.CfnLogGroup",
+                  "version": "2.178.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_logs.LogGroup",
+              "version": "2.178.1",
+              "metadata": []
+            }
+          },
+          "PatientService": {
+            "id": "PatientService",
+            "path": "localstack/PatientService",
+            "children": {
+              "Service": {
+                "id": "Service",
+                "path": "localstack/PatientService/Service",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::ECS::Service",
+                  "aws:cdk:cloudformation:props": {
+                    "cluster": {
+                      "Ref": "PatientManagementCluster98E10F8D"
+                    },
+                    "deploymentConfiguration": {
+                      "maximumPercent": 200,
+                      "minimumHealthyPercent": 50,
+                      "alarms": {
+                        "alarmNames": [],
+                        "enable": false,
+                        "rollback": false
+                      }
+                    },
+                    "enableEcsManagedTags": false,
+                    "launchType": "FARGATE",
+                    "networkConfiguration": {
+                      "awsvpcConfiguration": {
+                        "assignPublicIp": "DISABLED",
+                        "subnets": [
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet1Subnet05B10E79"
+                          },
+                          {
+                            "Ref": "PatientManagementVPCPrivateSubnet2Subnet8A2E409C"
+                          }
+                        ],
+                        "securityGroups": [
+                          {
+                            "Fn::GetAtt": [
+                              "PatientServiceSecurityGroup547BE1F2",
+                              "GroupId"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "serviceName": "patient-service",
+                    "taskDefinition": {
+                      "Ref": "PatientServicetaskFC8D0A76"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecs.CfnService",
+                  "version": "2.178.1"
+                }
+              },
+              "SecurityGroup": {
+                "id": "SecurityGroup",
+                "path": "localstack/PatientService/SecurityGroup",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "localstack/PatientService/SecurityGroup/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::EC2::SecurityGroup",
+                      "aws:cdk:cloudformation:props": {
+                        "groupDescription": "localstack/PatientService/SecurityGroup",
+                        "securityGroupEgress": [
+                          {
+                            "cidrIp": "0.0.0.0/0",
+                            "description": "Allow all outbound traffic by default",
+                            "ipProtocol": "-1"
+                          }
+                        ],
+                        "vpcId": {
+                          "Ref": "PatientManagementVPC522067E7"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ec2.CfnSecurityGroup",
+                      "version": "2.178.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ec2.SecurityGroup",
+                  "version": "2.178.1",
+                  "metadata": []
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_ecs.FargateService",
+              "version": "2.178.1",
+              "metadata": []
+            }
           }
         },
         "constructInfo": {

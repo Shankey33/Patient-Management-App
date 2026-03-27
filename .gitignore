@@ -1,0 +1,62 @@
+############################
+# IntelliJ / IDE
+############################
+.idea/
+*.iml
+*.iws
+out/
+
+############################
+# Java / Maven / Gradle
+############################
+target/
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+############################
+# Logs
+############################
+logs/
+*.log
+
+############################
+# OS files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Environment / Secrets
+############################
+.env
+.env.*
+*.env
+application-local.yml
+application-dev.yml
+application-prod.yml
+*.properties.local
+
+############################
+# Docker
+############################
+docker-compose.override.yml
+*.dockerfile
+docker-data/
+db_volumes/
+*.pid
+
+############################
+# Coverage / Testing
+############################
+coverage/
+*.lcov
+*.exec
+
+############################
+# Misc
+############################
+*.swp
+*.swo
+*.tmp
+*.bak
